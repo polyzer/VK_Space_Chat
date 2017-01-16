@@ -1,19 +1,29 @@
 var express = require("express");
+var fs = require("fs");
+var https = require("https");
 var ExpressPeerServer = require("peer").ExpressPeerServer;
 var bodyParser = require("body-parser");
 var urlencodedParser = bodyParser.urlencoded({extended: false});
 var jsonParser = bodyParser.json();
-//var BodyParser = require("body-parser"); 
-
 var const_and_funcs = require("./vk_space_chat_constants_and_general_functions.js");
+
+var credentials = {
+    key: fs.readFileSync('/etc/apache2/ssl/apache.key'),
+    cert: fs.readFileSync('/etc/apache2/ssl/apache.crt')	
+ }
+
+
 var app = express();
-var server = app.listen(const_and_funcs.PEER_PORT_ADDR);
+var httpsServer = https.createServer(credentials, app).listen(const_and_funcs.PEER_PORT_ADDR);
+//var server = app.listen(const_and_funcs.PEER_PORT_ADDR);
+//app.listen(const_and_funcs.PEER_PORT_ADDR);
 
 var options = {
-	debug: true
+	debug: true,
 };
 
-var peerServer = ExpressPeerServer(server, options);
+var peerServer = ExpressPeerServer(httpsServer, options);
+//var peerServer = ExpressPeerServer(server, options);
 app.use(const_and_funcs.PEER_PATH_ADDR, peerServer);
 app.use(jsonParser);
 app.use(urlencodedParser);
@@ -34,8 +44,6 @@ var _Room = function (json_params)
 	this.RoomID = const_and_funcs.DEFAULT_ROOM_ID;
 	this.RoomName = "DefaultName";
 };
-
-console.log(const_and_funcs.GAME_ROOM_MODE);
 
 /* Теперь ids содержит список неопределившихся пользователей,
  * Который никуда не должен передаваться.
@@ -92,7 +100,6 @@ function SingleRoom_onComeIntoRoom(req, res)
 {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");  
-	   
   for(var i=0; i<Rooms.length; i++)
   {
 		if(Rooms[i].RoomID === req.body.room_id)

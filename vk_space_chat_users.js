@@ -6,30 +6,44 @@
  *   all_users: Game.Players, - содержит список удаленных игроков, чтобы отсылать им данные
  *   scene: THREE.Scene(); - объект сцены, в которую нужно будет добавить свой корабль
  * }
- */
+ * Пользователи сами обрабатывают медиа-вызовы!
+ */  
+ 
 var _LocalUser = function (json_params)
 {
 	if(json_params !== undefined)
 	{
 		this.Scene = json_params.scene;
-		this.UserType = "local";
-		this.RemoteUsers = json_params.remote_users;
+		this.UserType = USER_TYPES.LOCAL;
 		this.AllUsers = json_params.all_users;
 		this.NetMessagesObject = json_params.net_messages_object;
 		this.Camera = json_params.camera;
 		this.Body = json_params.body;
-		this.Video = document.getElementById( 'monitor' );
+		 
+		this.Video = document.createElement("video");
+		this.Video.autoplay = 1;
+		this.Video.width = 160;
+		this.Video.height = 120;
+		this.Video.style.visibility = "hidden";
+		this.Video.style.float = "left";
+		this.Video.src = StreamObj;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!W
 		
-		this.VideoImage = document.getElementById( 'videoImage' );
-		this.VideoImageContext = this.VideoImage.getContext( '2d' );
+		
+		this.VideoImage = document.createElement("canvas");
+		this.VideoImage.width = 160;
+		this.VideoImage.height = 120;
+		this.VideoImage.style.visibility = "hidden";
+		this.VideoImage.style.float = "left";
+
+		this.VideoImageContext = this.VideoImage.getContext("2d");
 		// background color if no video present
-		this.VideoImageContext.fillStyle = '#00FF00';
+		this.VideoImageContext.fillStyle = "#00FF00";
 		this.VideoImageContext.fillRect( 0, 0, this.VideoImage.width, this.VideoImage.height );
 
 		this.VideoTexture = new THREE.Texture( this.VideoImage );
 		this.VideoTexture.minFilter = THREE.LinearFilter;
 		this.VideoTexture.magFilter = THREE.LinearFilter;
-		this.Ship = new _VisualKeeper({scene: this.Scene, camera: this.Camera, video_texture: this.VideoTexture});
+		this.Ship = new _VisualKeeper({scene: this.Scene, camera: this.Camera, texture: this.VideoTexture, user_type: this.UserType});
 
 		
 		this.GameWidth = json_params.game_width;
@@ -55,6 +69,12 @@ var _LocalUser = function (json_params)
 	this.onClickBF = this.onClick.bind(this);
 	window.addEventListener("click", this.onClickBF, false);
 		
+};
+/* Функция возвращает ЛОКАЛЬНЫЙ видеопоток.
+ */
+_LocalUser.prototype.getStream = function ()
+{
+	return this.Video.src;
 };
 
 _LocalUser.prototype.updateVideoTextureData = function ()
@@ -112,23 +132,11 @@ _LocalUser.prototype.sendDataToAllRemoteUsers = function (message)
 	{
 		message = JSON.stringify(message);
 	}
-	for(var i=0;i< this.RemoteUsers.length; i++)
+	for(var i=0;i<this.AllUsers[1].length; i++)
 	{
-		if(this.RemoteUsers[i].ConnectionStatus === "open")
-			this.RemoteUsers[i].Connection.send(message);
+		if(this.AllUsers[1][i].ConnectionStatus === "open")
+			this.AllUsers[1][i].Connection.send(message);
 	}
-};
-
-/* Устанавливает массив удаленных игроков, которым мы будем отсылать сообщения;
- */
-
-_LocalUser.prototype.setRemoteUsers = function (json_params)
-{
-	if(json_params === undefined)
-	{
-		throw new Error("json_params is undefined in: " + this.constructor.name + "");
-	} else
-		this.RemoteUsers = json_params.remote_users;
 };
 
 /*Обновляет данные в объекте сообщений, которые будут отправляться другим
@@ -142,7 +150,6 @@ _LocalUser.prototype.updateMessages = function ()
 
 _LocalUser.prototype.raycastingControl = function ()
 {
-	
 	this.Raycaster.setFromCamera(this.MouseVector, this.Camera);
 
 	var intersects = this.Raycaster.intersectObjects(this.Scene.children);
@@ -154,6 +161,7 @@ _LocalUser.prototype.raycastingControl = function ()
 				this.INTERSECTED.material.emissive.setHex(this.INTERSECTED.currentHex);
 			this.INTERSECTED = intersects[0].object;
 			this.INTERSECTED.currentHex = this.INTERSECTED.material.emissive.getHex();
+			
 			this.INTERSECTED.material.emissive.setHex(0xff0000);
 		}			
 	}else
@@ -169,7 +177,7 @@ _LocalUser.prototype.raycastingControl = function ()
  */
 _LocalUser.prototype.update = function ()
 {
-	this.raycastingControl();
+	//this.raycastingControl();
 	this.updateVideoTextureData();
 	this.Ship.Life();
 	
@@ -204,16 +212,30 @@ _LocalUser.prototype.getShip = function ()
 
 var _RemoteUser = function (json_params)
 {
+		this.Scene = null;		
+		this.Connection = null;
+		this.NetMessagesObject = null;
+		this.AllUsers = null;
+		this.Ship = null;
+		this.ConnectionStatus = null;
+		this.Nickname = null;
+		this.MediaConnection = null;
+		this.UserType = USER_TYPES.REMOTE;		
+		this.Video = null;
+		this.VideoImage = null;
+		this.VideoImageContext = null;
+		this.VideoTexture = null;
+				
 	if(json_params !== undefined)
 	{
-		this.UserType = "remote";
 		this.Scene = json_params.scene;		
 		this.Connection = json_params.connection;
 		this.NetMessagesObject = json_params.net_messages_object;
 		this.AllUsers = json_params.all_users;
-		this.Ship = new _VisualKeeper({scene: this.Scene, random: true});
-		this.ConnectionStatus = "null";
-		this.ID = json_params.id;
+		
+		this.Ship = new _VisualKeeper({scene: this.Scene, random: true, user_type: this.UserType});
+		
+		this.ID = json_params.id;		
 		
 	}else
 		throw new Error(this.constructor.name + " have no json_params!");
@@ -229,8 +251,46 @@ var _RemoteUser = function (json_params)
 
 	this.onConnectionErrorFunc = this.onConnectionError.bind(this); 
 	this.Connection.on("error", this.onConnectionErrorFunc);
+	
 
 };
+
+_RemoteUser.prototype.getPeerID = function ()
+{
+	return this.Connection.peer;
+};
+/*	This is callback for Peer.js
+ */
+_RemoteUser.prototype.onCall = function (call)
+{
+	this.MediaConnection = call;
+	this.MediaConnection.answer(this.AllUsers[0].getStream());
+	this.MediaConnection.on("stream", this.onStreamBF);
+	this.MediaConnection.on("close", this.onMediaConnectionCloseBF);
+	this.MediaConnection.on("error", this.onMediaConnectionErrorBF);
+};
+/*	This function catches stream from remote user 
+ */
+_RemoteUser.prototype.onStream = function (stream)
+{
+	if (window.URL) 
+	{   this.Video.src = window.URL.createObjectURL(stream);   } 
+	else // Opera
+	{  	this.Video.src = stream;   }
+
+	this.Video.onerror = function(e) 
+	{   stream.stop();   };
+
+	stream.onended = noStream;
+};
+
+_RemoteUser.prototype.onMediaConnectionClose = function ()
+{
+};
+_RemoteUser.prototype.onMediaConnectionError = function ()
+{
+};
+
 
 /* при открытии соединения!
  */
@@ -304,7 +364,22 @@ _RemoteUser.prototype.onDataRecieved = function (json_params)
 
 _RemoteUser.prototype.update = function ()
 {
+	this.updateVideoTextureData();
 	this.Ship.Life();
+};
+
+_RemoteUser.prototype.updateVideoTextureData = function ()
+{
+	if(this.Video === null)
+	{
+		return;
+	}
+	if ( this.Video.readyState === this.Video.HAVE_ENOUGH_DATA ) 
+	{
+		this.VideoImageContext.drawImage( this.Video, 0, 0, this.VideoImage.width, this.VideoImage.height );
+		if ( this.VideoTexture ) 
+			this.VideoTexture.needsUpdate = true;
+	}
 };
 
 _RemoteUser.prototype.getMesh = function ()
@@ -315,4 +390,30 @@ _RemoteUser.prototype.getMesh = function ()
 _RemoteUser.prototype.getShip = function ()
 {
 	return this.Ship;
+};
+// Вызывается для установки видеотекстуры удаленного игрока.
+_RemoteUser.prototype.setVideoTexture = function()
+{
+		this.Video = document.createElement("video");;
+		this.Video.autoplay = 1;
+		this.Video.width = 160;
+		this.Video.height = 120;
+		this.Video.style.visibility = "hidden";
+		this.Video.style.float = "left";
+		
+		this.VideoImage = document.createElement("canvas");
+		this.VideoImage.width = 160;
+		this.VideoImage.height = 120;
+		this.VideoImage.style.visibility = "hidden";
+		this.VideoImage.style.float = "left";
+
+		this.VideoImageContext = this.VideoImage.getContext("2d");
+		// background color if no video present
+		this.VideoImageContext.fillStyle = "#00FF00";
+		this.VideoImageContext.fillRect( 0, 0, this.VideoImage.width, this.VideoImage.height );
+
+		this.VideoTexture = new THREE.Texture( this.VideoImage );
+		this.VideoTexture.minFilter = THREE.LinearFilter;
+		this.VideoTexture.magFilter = THREE.LinearFilter;
+		this.Ship.setTextureAndUpdateMesh(this.VideoTexture);
 };

@@ -10,9 +10,7 @@ var _Menu = function (json_params)
 	this.onNicknameEnteringBF = this.onNicknameEntering.bind(this);
 	this.createSelectOptionsByRoomsListBF = this.createSelectOptionsByRoomsList.bind(this);
 	this.onRoomSelectBF = this.onRoomSelect.bind(this);
-	
 	this.onStartButtonClickBF = this.onStartButtonClick.bind(this);
-	
 	this.onConnectionOpenBF = this.onConnectionOpen.bind(this);
 		/*END OF FUNCTIONS BINDS
 		 */	
@@ -27,7 +25,7 @@ var _Menu = function (json_params)
 	this.CameraParameters.SCREEN_HEIGHT = 650;
 	this.CameraParameters.NEAR = 0.1;
 	this.CameraParameters.FAR = 10000;
-	this.CameraParameters.VIEW_ANGLE = 45
+	this.CameraParameters.VIEW_ANGLE = 45;
 
 	
 	this.Camera = new THREE.PerspectiveCamera(this.CameraParameters.ANGLE, 
@@ -46,6 +44,12 @@ var _Menu = function (json_params)
 	this.Renderer.setSize(this.CameraParameters.SCREEN_WIDTH, this.CameraParameters.SCREEN_HEIGHT);
 	this.Container.appendChild(this.Renderer.domElement);
 	
+	
+	this.SkyBox = {};
+	this.SkyBox.Geometry = new THREE.BoxGeometry(10000, 10000, 10000);
+	this.SkyBox.Material = new THREE.MeshBasicMaterial({color: 0x9999ff, side: THREE.BackSide});
+	this.SkyBox.Mesh = new THREE.Mesh(this.SkyBox.Geometry, this.SkyBox.Material);
+	this.Scene.add(this.SkyBox.Mesh);
 	
 	this.CSSRenderer = new THREE.CSS3DRenderer();
 	this.CSSRenderer.setSize(this.CameraParameters.SCREEN_WIDTH, this.CameraParameters.SCREEN_HEIGHT);
@@ -90,7 +94,11 @@ var _Menu = function (json_params)
 	this.Peer = new Peer({host: PEER_SERVER_ADDR, 
 												port: PEER_PORT_ADDR, 
 												path: PEER_PATH_ADDR,
-												debug: true
+												debug: true,
+												config: {'iceServers': [
+													{ urls: 'stun:stun.l.google.com:19302' },
+													{ urls: 'turn:homeo@turn.bistri.com:80', credential: 'homeo' }
+												]} /* Sample servers, please use appropriate ones */
 											});
 
 	this.Body = new _Body();

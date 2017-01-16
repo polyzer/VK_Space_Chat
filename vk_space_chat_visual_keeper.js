@@ -7,6 +7,7 @@ var _VisualKeeper = function (json_params)
 {	
 	this.Geometry = new THREE.PlaneGeometry(100, 100);
 	this.Material = null;
+	this.UserType = null; // null, USER_TYPES.LOCAL, USER_TYPE.REMOTE
 	
 	this.Status = "live"; // ("live", "dead")
 	
@@ -29,9 +30,13 @@ var _VisualKeeper = function (json_params)
 		{
 			this.Camera = json_params.camera;
 		}
-		if(json_params.video_texture !== undefined)
+		if(json_params.user_type !== undefined)
 		{
-			this.Material = new THREE.MeshBasicMaterial( { map: json_params.video_texture, overdraw: true, side:THREE.DoubleSide, color: 0xff0000 } );
+			this.UserType = json_params.user_type;
+		}
+		if(json_params.texture !== undefined)
+		{
+			this.Material = new THREE.MeshBasicMaterial( { map: json_params.texture, overdraw: true, side:THREE.DoubleSide, color: 0xff0000 } );
 		}
 	}
 	
@@ -41,7 +46,7 @@ var _VisualKeeper = function (json_params)
 	}
 
 	// Для локального игрока
-	if(this.Camera !== null)
+	if(this.UserType === USER_TYPES.LOCAL)
 	{
 		this.ShipMesh = new THREE.Mesh(this.Geometry, this.Material);		
 		this.Mesh = new THREE.Object3D();
@@ -51,14 +56,15 @@ var _VisualKeeper = function (json_params)
 		
 		this.Camera.position.copy(this.ShipMesh.position);
 		
-		this.Camera.position.y = this.ShipMesh.position.y + 400;
+		this.Camera.position.y = this.ShipMesh.position.y + 200;
 		this.Camera.position.z = this.ShipMesh.position.z + 400;
 		var vec = this.Mesh.getWorldDirection();
 		this.Camera.lookAt(this.Mesh.position);
 		this.Mesh.add(this.ShipMesh);
 		this.Mesh.add(this.Camera);
-	}	else
-	// Для удаленного игрока
+	}
+	// для удаленного игрока
+	if(this.UserType === USER_TYPES.REMOTE)
 	{
 		this.Mesh = new THREE.Mesh(this.Geometry, this.Material);
 		this.BBox = new THREE.BoundingBoxHelper(this.Mesh, 0x00ff00);	
@@ -72,7 +78,7 @@ var _VisualKeeper = function (json_params)
 		this.Mesh.position.set(0,0,0);
 	}
 	this.Scene.add(this.Mesh);
-//	this.Scene.add(this.BBox);
+	this.Scene.add(this.BBox);
 
 };
 
@@ -82,10 +88,10 @@ _VisualKeeper.prototype.setRandomPosition = function ()
 };
 
 
-
 // это функция, которая должна вызываться в главной игровой функции
 _VisualKeeper.prototype.Life = function ()
 {
+	this.BBox.setRotationFromEuler(this.Mesh.rotation);
 	this.BBox.update();
 };
 
@@ -133,3 +139,27 @@ _VisualKeeper.prototype.removeMesh = function ()
 	this.Scene.remove(this.Mesh);
 };
 
+_VisualKeeper.prototype.setTexture = function (texture)
+{
+	this.Material = new THREE.MeshBasicMaterial( { map: texture, overdraw: true, side:THREE.DoubleSide, color: 0xff0000 } );
+};
+/*
+ * Устанавливает текстуру и обновляет Mesh.
+ */
+_VisualKeeper.prototype.setVideoTextureAndUpdateMesh = function (texture)
+{
+	this.Material = new THREE.MeshBasicMaterial( { map: texture, overdraw: true, side:THREE.DoubleSide, color: 0xff0000 } );
+	
+	if(this.Type === USER_TYPES.LOCAL)
+	{
+		temp_mesh = this.Mesh;
+		this.Mesh.remove(this.ShipMesh);
+		this.ShipMesh = new THREE.Mesh(this.Geometry, this.Material);
+		this.Mesh.add(this.ShipMesh);		
+	}else
+	{
+		this.Scene.remove(this.Mesh);
+		this.Mesh = new THREE.Mesh(this.Geometry, this.Material);
+		this.Scene.add(this.Mesh);
+	}
+};

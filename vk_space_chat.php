@@ -27,37 +27,30 @@
 
 <body>
 
-<video id="monitor" autoplay width="160" height="120" style=
-"visibility: hidden; float:left;"></video> 
-<canvas id="videoImage" 
-width="160" height="120" style="visibility: hidden; float:left;"
-></canvas>
-<div id="errorMessage"></div>
-
 <script>
+
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 window.URL = window.URL || window.webkitURL;
+var StreamObj = null;
+var MenuObj = null;
 
-var camvideo = document.getElementById('monitor');
-
-	if (!navigator.getUserMedia) 
-	{
-		document.getElementById('errorMessage').innerHTML = 'Sorry. <code>navigator.getUserMedia()</code> is not available.';
-	} else {
-		navigator.getUserMedia({video: true}, gotStream, noStream);
-	}
+if (!navigator.getUserMedia) 
+{
+	alert('Sorry. <code>navigator.getUserMedia()</code> is not available.');
+} else {
+	navigator.getUserMedia({video: true, audio: true}, gotStream, noStream);
+}
 
 function gotStream(stream) 
 {
 	if (window.URL) 
-	{   camvideo.src = window.URL.createObjectURL(stream);   } 
+	{   StreamObj = window.URL.createObjectURL(stream);   } 
 	else // Opera
-	{   camvideo.src = stream;   }
+	{   StreamObj = stream;   }
 
-	camvideo.onerror = function(e) 
-	{   stream.stop();   };
-
+	
 	stream.onended = noStream;
+	MenuObj = new _Menu();
 }
 
 function noStream(e) 
@@ -65,7 +58,7 @@ function noStream(e)
 	var msg = 'No camera available.';
 	if (e.code == 1) 
 	{   msg = 'User denied access to use camera.';   }
-	document.getElementById('errorMessage').textContent = msg;
+	//alert(e.code);
 }
 </script>
 
@@ -73,7 +66,17 @@ function noStream(e)
 <script>
 // создаем игру при загрузке приложения			
 //var ActivityObj = new _VKSpaceChat();
-var MenuObj = new _Menu();
+
+/*   
+navigator.mediaDevices.getUserMedia({video: true, audio: true})
+.then(function (stream) 
+{
+	StreamObj = stream;
+	MenuObj = new _Menu();
+}		 );
+*/
+
+//var MenuObj = new _Menu();
 
 </script>
 

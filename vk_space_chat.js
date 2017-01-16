@@ -15,6 +15,13 @@ var _VKSpaceChat = function (json_params)
 																						this.CameraParameters.NEAR, 
 																						this.CameraParameters.FAR
 																						);
+	
+	this.SkyBox = {};
+	this.SkyBox.Geometry = new THREE.BoxGeometry(10000, 10000, 10000);
+	this.SkyBox.Material = new THREE.MeshBasicMaterial({color: 0x9999ff, side: THREE.BackSide});
+	this.SkyBox.Mesh = new THREE.Mesh(this.SkyBox.Geometry, this.SkyBox.Material);
+	this.Scene.add(this.SkyBox.Mesh);																						
+																						
 	this.Renderer = new THREE.WebGLRenderer();
 	this.Renderer.setSize(this.CameraParameters.SCREEN_WIDTH, this.CameraParameters.SCREEN_HEIGHT);
 	
@@ -49,22 +56,24 @@ var _VKSpaceChat = function (json_params)
 	this.createUsersByExistingConnectionsBF = this.createUsersByExistingConnections.bind(this);
 	this.updateWorkingProcessBF = this.updateWorkingProcess.bind(this);
 	this.createUserByRecievedConnectionBF = this.createUserByRecievedConnection.bind(this);
-
-		
-	
+	this.onCallBF = this.onCall.bind(this);
+			
   this.onOpenInitAndStartGame();
 };		
 
-/*Создает локальный поток, который будет отображаться на текстуре локального игрока*/
-_VKSpaceChat.prototype.createLocalStream = function ()
-{
-	
-}
 
-_VKSpaceChat.prototype.onIncomingStream = function ()
+/*Обрабатывает медиапотоки, присылваемые другими пользователями,
+ *и присваивает их нужным пользователям!
+ */
+_VKSpaceChat.prototype.onCall = function (call)
 {
-	
-}
+	for(var i=0; i<this.AllUsers[1].length; i++)
+	{
+		call.answer(Stream);
+		if(this.AllUsers[1][i].getPeerID() === call.peer)
+			this.AllUsers[1][i].onCall(call);
+	}
+};
 
 
 /* Инициализирует начало работы Peer.js
@@ -73,13 +82,10 @@ _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 {
   	// Устанавливаем обработчика событий
 	this.Peer.on('connection', this.createUserByRecievedConnectionBF);
-  
-	this.getAndSetInitConnections();
-//	this.updateWorkingProcess();
+  this.Peer.on('call', this.onCallBF);
 	// Локальный игрок, который будет
 	this.LocalUser = new _LocalUser({
 		scene: this.Scene, 
-		remote_users: this.RemoteUsers,
 		all_users: this.AllUsers, 
 		net_messages_object: this.NetMessagesObject,
 		camera: this.Camera,
@@ -87,22 +93,23 @@ _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 		game_height: this.GameHeight,
 		body: this.Body
 	});
+	
+	this.getAndSetInitConnections();
+
 		// начинаем игру, после инициализации
 	this.AllUsers.push(this.LocalUser);
 	this.AllUsers.push(this.RemoteUsers);
-
+	
 	this.startWorkingProcess();
 
 }
 
-/*
- * Важнейшая функция.
+/* Важнейшая функция.
  * Создает соединения с пользователями, которые уже
  * находятся в сети.
  * Принимает на вход:
  * json_params: {response: [ids]}
  */
- 
 _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 {
 	alert(json_params);
@@ -125,6 +132,8 @@ _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 			continue;
 		}
 		conn = this.Peer.connect(json_params.response[i]);
+		alert(StreamObj);
+		this.Peer.call(json_params.response[i], StreamObj);///////////////////////////////////////////???????!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		this.RemoteUsers.push(new _RemoteUser({
 				net_messages_object: this.NetMessagesObject,
 				all_users: this.AllUsers,
@@ -133,7 +142,7 @@ _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 			}));
 	}
 
-}
+};
 
 /* Важнейшая функция игры, в которой происходит управление и обновление всех систем!!
  */

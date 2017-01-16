@@ -3,6 +3,9 @@ var	ROOM_MODE = {};
 		ROOM_MODE.SINGLE = 0;
 		ROOM_MODE.MULTI = 1;
 
+var USER_TYPES = {};
+		USER_TYPES.LOCAL = 0;
+		USER_TYPES.REMOTE = 1;
 
 var GAME_ROOM_MODE = ROOM_MODE.SINGLE;
 
@@ -10,11 +13,12 @@ var HINT_SHOW_TIME_MSECS = 3000;
 
 var MAX_NICKNAME_LENGTH = 15;
 
-var SERVER_REQUEST_ADDR = "http://localhost:9001";
 
 var PEER_SERVER_ADDR = "localhost";
-var PEER_PORT_ADDR = "9001";
+var PEER_PORT_ADDR = "9002";
 var PEER_PATH_ADDR = "/vk_space_chat";
+var SERVER_REQUEST_ADDR = "https://" + PEER_SERVER_ADDR + ":" + PEER_PORT_ADDR;
+
 var MAX_ROOM_USERS = 100; // максимум человек в комнате;
 
 var MIN_ROOMS_COUNT = 1; // минимальное количество комнат;
