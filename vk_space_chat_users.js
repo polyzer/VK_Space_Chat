@@ -70,12 +70,6 @@ var _LocalUser = function (json_params)
 	window.addEventListener("click", this.onClickBF, false);
 		
 };
-/* Функция возвращает ЛОКАЛЬНЫЙ видеопоток.
- */
-_LocalUser.prototype.getStream = function ()
-{
-	return this.Video.src;
-};
 
 _LocalUser.prototype.updateVideoTextureData = function ()
 {
@@ -251,7 +245,9 @@ var _RemoteUser = function (json_params)
 
 	this.onConnectionErrorFunc = this.onConnectionError.bind(this); 
 	this.Connection.on("error", this.onConnectionErrorFunc);
-	
+
+	this.makeMediaConnectionAnswerBF = this.makeMediaConnectionAnswer.bind(this);
+	this.onStreamBF = this.onStream.bind(this);
 
 };
 
@@ -264,15 +260,34 @@ _RemoteUser.prototype.getPeerID = function ()
 _RemoteUser.prototype.onCall = function (call)
 {
 	this.MediaConnection = call;
-	this.MediaConnection.answer(this.AllUsers[0].getStream());
+	alert("from oncall");
+	navigator.getUserMedia({"video": true, "audio": true}, 
+							this.makeMediaConnectionAnswerBF, 
+							function (e) {}
+						  );
 	this.MediaConnection.on("stream", this.onStreamBF);
 	this.MediaConnection.on("close", this.onMediaConnectionCloseBF);
 	this.MediaConnection.on("error", this.onMediaConnectionErrorBF);
+};
+/*
+	This function makes answer
+ */
+_RemoteUser.prototype.makeMediaConnectionAnswer = function (stream)
+{
+	if (window.URL) 
+	{   stream = window.URL.createObjectURL(stream);   } 
+	else // Opera
+	{   stream = stream;   }
+
+
+	this.MediaConnection.answer(stream);
 };
 /*	This function catches stream from remote user 
  */
 _RemoteUser.prototype.onStream = function (stream)
 {
+	this.setVideoTexture();
+	alert("it was");
 	if (window.URL) 
 	{   this.Video.src = window.URL.createObjectURL(stream);   } 
 	else // Opera
@@ -280,7 +295,6 @@ _RemoteUser.prototype.onStream = function (stream)
 
 	this.Video.onerror = function(e) 
 	{   stream.stop();   };
-
 	stream.onended = noStream;
 };
 
@@ -376,6 +390,7 @@ _RemoteUser.prototype.updateVideoTextureData = function ()
 	}
 	if ( this.Video.readyState === this.Video.HAVE_ENOUGH_DATA ) 
 	{
+
 		this.VideoImageContext.drawImage( this.Video, 0, 0, this.VideoImage.width, this.VideoImage.height );
 		if ( this.VideoTexture ) 
 			this.VideoTexture.needsUpdate = true;

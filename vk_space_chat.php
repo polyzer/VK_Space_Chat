@@ -47,7 +47,6 @@ function gotStream(stream)
 	{   StreamObj = window.URL.createObjectURL(stream);   } 
 	else // Opera
 	{   StreamObj = stream;   }
-
 	
 	stream.onended = noStream;
 	MenuObj = new _Menu();

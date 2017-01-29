@@ -1,6 +1,12 @@
 
 var _VKSpaceChat = function (json_params) 
 {
+	this.createUsersByExistingConnectionsBF = this.createUsersByExistingConnections.bind(this);
+	this.updateWorkingProcessBF = this.updateWorkingProcess.bind(this);
+	this.createUserByRecievedConnectionBF = this.createUserByRecievedConnection.bind(this);
+	this.onCallBF = this.onCall.bind(this);
+	this.makeCallsToAllRemoteUsersBF = this.makeCallsToAllRemoteUsers.bind(this);		
+
 	// подготовка
 	this.Container = document.createElement("div");
 	this.Container.setAttribute("id", "MainContainer");
@@ -11,10 +17,10 @@ var _VKSpaceChat = function (json_params)
 	this.CameraParameters = json_params.camera_parameters;
 
 	this.Camera = new THREE.PerspectiveCamera(this.CameraParameters.ANGLE, 
-																						this.CameraParameters.SCREEN_WIDTH/this.CameraParameters.SCREEN_HEIGHT, 
-																						this.CameraParameters.NEAR, 
-																						this.CameraParameters.FAR
-																						);
+											  this.CameraParameters.SCREEN_WIDTH/this.CameraParameters.SCREEN_HEIGHT, 
+											  this.CameraParameters.NEAR, 
+											  this.CameraParameters.FAR
+											 );
 	
 	this.SkyBox = {};
 	this.SkyBox.Geometry = new THREE.BoxGeometry(10000, 10000, 10000);
@@ -53,11 +59,6 @@ var _VKSpaceChat = function (json_params)
 		this.setRoomID(json_params.room_id);
 	this.Peer = json_params.peer;
 		
-	this.createUsersByExistingConnectionsBF = this.createUsersByExistingConnections.bind(this);
-	this.updateWorkingProcessBF = this.updateWorkingProcess.bind(this);
-	this.createUserByRecievedConnectionBF = this.createUserByRecievedConnection.bind(this);
-	this.onCallBF = this.onCall.bind(this);
-			
   this.onOpenInitAndStartGame();
 };		
 
@@ -67,9 +68,10 @@ var _VKSpaceChat = function (json_params)
  */
 _VKSpaceChat.prototype.onCall = function (call)
 {
+	window.alert("FROM VK CALL");
 	for(var i=0; i<this.AllUsers[1].length; i++)
 	{
-		call.answer(Stream);
+		//call.answer(Stream);
 		if(this.AllUsers[1][i].getPeerID() === call.peer)
 			this.AllUsers[1][i].onCall(call);
 	}
@@ -80,9 +82,12 @@ _VKSpaceChat.prototype.onCall = function (call)
  */
 _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 {
-  	// Устанавливаем обработчика событий
-	this.Peer.on('connection', this.createUserByRecievedConnectionBF);
-  this.Peer.on('call', this.onCallBF);
+  // Устанавливаем обработчика событий
+  this.Peer.on("connection", this.createUserByRecievedConnectionBF);
+  this.Peer.on("call", this.onCallBF);
+	
+  this.AllUsers.push(this.LocalUser);
+  this.AllUsers.push(this.RemoteUsers);
 	// Локальный игрок, который будет
 	this.LocalUser = new _LocalUser({
 		scene: this.Scene, 
@@ -93,12 +98,9 @@ _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 		game_height: this.GameHeight,
 		body: this.Body
 	});
-	
+
 	this.getAndSetInitConnections();
 
-		// начинаем игру, после инициализации
-	this.AllUsers.push(this.LocalUser);
-	this.AllUsers.push(this.RemoteUsers);
 	
 	this.startWorkingProcess();
 
@@ -112,7 +114,6 @@ _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
  */
 _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 {
-	alert(json_params);
 	if(json_params === "undefined")
 	{
 		throw new Error(this.constructor.name + ".createUsersByExistingConnections(json_response) - have no json_response");
@@ -132,8 +133,6 @@ _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 			continue;
 		}
 		conn = this.Peer.connect(json_params.response[i]);
-		alert(StreamObj);
-		this.Peer.call(json_params.response[i], StreamObj);///////////////////////////////////////////???????!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		this.RemoteUsers.push(new _RemoteUser({
 				net_messages_object: this.NetMessagesObject,
 				all_users: this.AllUsers,
@@ -142,6 +141,27 @@ _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 			}));
 	}
 
+	navigator.getUserMedia({"video": true, "audio": true}, 
+						   this.makeCallsToAllRemoteUsersBF, 
+						   function (e) {}
+						  );
+	
+};
+/*
+ * 
+*/
+_VKSpaceChat.prototype.makeCallsToAllRemoteUsers = function (stream)
+{
+	if (window.URL) 
+	{   stream = window.URL.createObjectURL(stream);   } 
+	else // Opera
+	{   stream = stream;   }
+
+	for(var i=0; i<this.AllUsers[1].length; i++)
+	{
+		this.Peer.call(this.AllUsers[1][i].getPeerID(), stream);
+	}
+	
 };
 
 /* Важнейшая функция игры, в которой происходит управление и обновление всех систем!!
@@ -182,15 +202,16 @@ _VKSpaceChat.prototype.getAndSetInitConnections = function (json_params)
 		throw new Error("Problem with room_id in function getAndSetInitConnections");
 		return;
 	}
-	
-	req_str = SERVER_REQUEST_ADDR  + "/" + REQUESTS.UTOS.COME_INTO_ROOM;
+	var req_str = SERVER_REQUEST_ADDR  + "/" + REQUESTS.UTOS.COME_INTO_ROOM;
 	$.ajax({
 		type:"POST",
 		url: req_str,
 		async: false,
-		crossDomain: true,
 		data: {room_id : this.RoomID, user_id: this.Peer.id},
-		success: this.createUsersByExistingConnectionsBF
+		success: this.createUsersByExistingConnectionsBF,
+		error: function (jqXHR, textStatus, errorThrown) {
+			alert(textStatus + " " + errorThrown);
+		}
 	});
 }
 
@@ -200,11 +221,11 @@ _VKSpaceChat.prototype.getAndSetInitConnections = function (json_params)
 _VKSpaceChat.prototype.createUserByRecievedConnection = function (conn)
 {
 	this.RemoteUsers.push(new _RemoteUser({
-															connection: conn,
-															scene: this.Scene,
-															all_users: this.AllUsers,
-															net_messages_object: this.NetMessagesObject													
-												}));
+										connection: conn,
+										scene: this.Scene,
+										all_users: this.AllUsers,
+										net_messages_object: this.NetMessagesObject													
+						}));
 };
 
 

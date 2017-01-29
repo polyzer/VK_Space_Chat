@@ -92,13 +92,9 @@ var _Menu = function (json_params)
 	this.checkNicknameRegExp = new RegExp("\\w+");
 	
 	this.Peer = new Peer({host: PEER_SERVER_ADDR, 
-												port: PEER_PORT_ADDR, 
-												path: PEER_PATH_ADDR,
-												debug: true,
-												config: {'iceServers': [
-													{ urls: 'stun:stun.l.google.com:19302' },
-													{ urls: 'turn:homeo@turn.bistri.com:80', credential: 'homeo' }
-												]} /* Sample servers, please use appropriate ones */
+						  port: PEER_PORT_ADDR, 
+						  path: PEER_PATH_ADDR,
+						  debug: true
 											});
 
 	this.Body = new _Body();
@@ -115,7 +111,9 @@ var _Menu = function (json_params)
 
 		 
 	this.Peer.on("open", this.onConnectionOpenBF);
-
+	this.Peer.on("error", function (err) {
+		window.alert(1);
+	});
 	this.updateBF();
 };
 
