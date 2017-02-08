@@ -14,10 +14,10 @@ var HINT_SHOW_TIME_MSECS = 3000;
 var MAX_NICKNAME_LENGTH = 15;
 
 
-var PEER_SERVER_ADDR = "185.26.120.99";
+var PEER_SERVER_ADDR = "www.polyzer.org";
 var PEER_PORT_ADDR = "9002";
 var PEER_PATH_ADDR = "/vk_space_chat";
-var SERVER_REQUEST_ADDR = "http://" + PEER_SERVER_ADDR + ":" + PEER_PORT_ADDR;
+var SERVER_REQUEST_ADDR = "https://" + PEER_SERVER_ADDR + ":" + PEER_PORT_ADDR;
 
 var MAX_ROOM_USERS = 100; // максимум человек в комнате;
 

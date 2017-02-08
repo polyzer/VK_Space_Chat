@@ -52,7 +52,6 @@ var _VisualKeeper = function (json_params)
 		this.Mesh = new THREE.Object3D();
 		this.Mesh.position.set(0,0,0);
 		this.ShipMesh.position.set(0, 0, 0);
-		this.BBox = new THREE.BoundingBoxHelper(this.ShipMesh, 0x00ff00);	
 		
 		this.Camera.position.copy(this.ShipMesh.position);
 		
@@ -67,7 +66,6 @@ var _VisualKeeper = function (json_params)
 	if(this.UserType === USER_TYPES.REMOTE)
 	{
 		this.Mesh = new THREE.Mesh(this.Geometry, this.Material);
-		this.BBox = new THREE.BoundingBoxHelper(this.Mesh, 0x00ff00);	
 	}
 	
 	if(json_params.random !== undefined)
@@ -78,7 +76,6 @@ var _VisualKeeper = function (json_params)
 		this.Mesh.position.set(0,0,0);
 	}
 	this.Scene.add(this.Mesh);
-	this.Scene.add(this.BBox);
 
 };
 
@@ -91,8 +88,11 @@ _VisualKeeper.prototype.setRandomPosition = function ()
 // это функция, которая должна вызываться в главной игровой функции
 _VisualKeeper.prototype.Life = function ()
 {
-	this.BBox.setRotationFromEuler(this.Mesh.rotation);
-	this.BBox.update();
+	if(this.UserType == USER_TYPES.LOCAL)
+		this.ShipMesh.geometry.computeBoundingBox();
+	else
+		this.Mesh.geometry.computeBoundingBox();
+	
 };
 
 /* Устанавливает позицию корабля
@@ -146,7 +146,7 @@ _VisualKeeper.prototype.setTexture = function (texture)
 /*
  * Устанавливает текстуру и обновляет Mesh.
  */
-_VisualKeeper.prototype.setVideoTextureAndUpdateMesh = function (texture)
+_VisualKeeper.prototype.setTextureAndUpdateMesh = function (texture)
 {
 	this.Material = new THREE.MeshBasicMaterial( { map: texture, overdraw: true, side:THREE.DoubleSide, color: 0xff0000 } );
 	

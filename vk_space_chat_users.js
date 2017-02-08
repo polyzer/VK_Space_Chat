@@ -274,27 +274,21 @@ _RemoteUser.prototype.onCall = function (call)
  */
 _RemoteUser.prototype.makeMediaConnectionAnswer = function (stream)
 {
-	if (window.URL) 
-	{   stream = window.URL.createObjectURL(stream);   } 
-	else // Opera
-	{   stream = stream;   }
-
-
 	this.MediaConnection.answer(stream);
 };
 /*	This function catches stream from remote user 
  */
 _RemoteUser.prototype.onStream = function (stream)
 {
-	this.setVideoTexture();
+	this.setVideoTexture(stream);
 	alert("it was");
-	if (window.URL) 
-	{   this.Video.src = window.URL.createObjectURL(stream);   } 
-	else // Opera
-	{  	this.Video.src = stream;   }
+//	this.Video.src = stream;
 
 	this.Video.onerror = function(e) 
-	{   stream.stop();   };
+	{   
+		
+		console.log();   
+	};
 	stream.onended = noStream;
 };
 
@@ -391,9 +385,10 @@ _RemoteUser.prototype.updateVideoTextureData = function ()
 	if ( this.Video.readyState === this.Video.HAVE_ENOUGH_DATA ) 
 	{
 
-		this.VideoImageContext.drawImage( this.Video, 0, 0, this.VideoImage.width, this.VideoImage.height );
-		if ( this.VideoTexture ) 
+//		this.VideoImageContext.drawImage( this.Video, 0, 0, this.VideoImage.width, this.VideoImage.height );
+		if ( this.VideoTexture ) {
 			this.VideoTexture.needsUpdate = true;
+		}
 	}
 };
 
@@ -407,15 +402,16 @@ _RemoteUser.prototype.getShip = function ()
 	return this.Ship;
 };
 // Вызывается для установки видеотекстуры удаленного игрока.
-_RemoteUser.prototype.setVideoTexture = function()
+_RemoteUser.prototype.setVideoTexture = function(source)
 {
-		this.Video = document.createElement("video");;
+		this.Video = document.createElement("video");
 		this.Video.autoplay = 1;
 		this.Video.width = 160;
 		this.Video.height = 120;
 		this.Video.style.visibility = "hidden";
 		this.Video.style.float = "left";
-		
+		this.Video.src = window.URL.createObjectURL(source);
+/*		
 		this.VideoImage = document.createElement("canvas");
 		this.VideoImage.width = 160;
 		this.VideoImage.height = 120;
@@ -426,8 +422,8 @@ _RemoteUser.prototype.setVideoTexture = function()
 		// background color if no video present
 		this.VideoImageContext.fillStyle = "#00FF00";
 		this.VideoImageContext.fillRect( 0, 0, this.VideoImage.width, this.VideoImage.height );
-
-		this.VideoTexture = new THREE.Texture( this.VideoImage );
+*/
+		this.VideoTexture = new THREE.VideoTexture( this.Video);
 		this.VideoTexture.minFilter = THREE.LinearFilter;
 		this.VideoTexture.magFilter = THREE.LinearFilter;
 		this.Ship.setTextureAndUpdateMesh(this.VideoTexture);

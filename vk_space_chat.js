@@ -152,11 +152,6 @@ _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 */
 _VKSpaceChat.prototype.makeCallsToAllRemoteUsers = function (stream)
 {
-	if (window.URL) 
-	{   stream = window.URL.createObjectURL(stream);   } 
-	else // Opera
-	{   stream = stream;   }
-
 	for(var i=0; i<this.AllUsers[1].length; i++)
 	{
 		this.Peer.call(this.AllUsers[1][i].getPeerID(), stream);
