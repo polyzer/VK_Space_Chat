@@ -22,13 +22,13 @@ var _LocalUser = function (json_params)
 		 
 		this.Video = document.createElement("video");
 		this.Video.autoplay = 1;
-		this.Video.width = 160;
-		this.Video.height = 120;
+		this.Video.width = 128;
+		this.Video.height = 128;
 		this.Video.style.visibility = "hidden";
 		this.Video.style.float = "left";
 		this.Video.src = StreamObj;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!W
 		
-		
+/*		
 		this.VideoImage = document.createElement("canvas");
 		this.VideoImage.width = 160;
 		this.VideoImage.height = 120;
@@ -39,8 +39,8 @@ var _LocalUser = function (json_params)
 		// background color if no video present
 		this.VideoImageContext.fillStyle = "#00FF00";
 		this.VideoImageContext.fillRect( 0, 0, this.VideoImage.width, this.VideoImage.height );
-
-		this.VideoTexture = new THREE.Texture( this.VideoImage );
+*/
+		this.VideoTexture = new THREE.VideoTexture( this.Video);
 		this.VideoTexture.minFilter = THREE.LinearFilter;
 		this.VideoTexture.magFilter = THREE.LinearFilter;
 		this.Ship = new _VisualKeeper({scene: this.Scene, camera: this.Camera, texture: this.VideoTexture, user_type: this.UserType});
@@ -73,12 +73,14 @@ var _LocalUser = function (json_params)
 
 _LocalUser.prototype.updateVideoTextureData = function ()
 {
+
 	if ( this.Video.readyState === this.Video.HAVE_ENOUGH_DATA ) 
 	{
 		this.VideoImageContext.drawImage( this.Video, 0, 0, this.VideoImage.width, this.VideoImage.height );
 		if ( this.VideoTexture ) 
 			this.VideoTexture.needsUpdate = true;
 	}
+
 };
 
 _LocalUser.prototype.onMouseMove = function (event)
@@ -171,8 +173,8 @@ _LocalUser.prototype.raycastingControl = function ()
  */
 _LocalUser.prototype.update = function ()
 {
-	//this.raycastingControl();
-	this.updateVideoTextureData();
+//	this.raycastingControl();
+//	this.updateVideoTextureData();
 	this.Ship.Life();
 	
 	this.Controls.update(0.1);
@@ -372,12 +374,13 @@ _RemoteUser.prototype.onDataRecieved = function (json_params)
 
 _RemoteUser.prototype.update = function ()
 {
-	this.updateVideoTextureData();
+//	this.updateVideoTextureData();
 	this.Ship.Life();
 };
 
 _RemoteUser.prototype.updateVideoTextureData = function ()
 {
+
 	if(this.Video === null)
 	{
 		return;
@@ -385,11 +388,12 @@ _RemoteUser.prototype.updateVideoTextureData = function ()
 	if ( this.Video.readyState === this.Video.HAVE_ENOUGH_DATA ) 
 	{
 
-//		this.VideoImageContext.drawImage( this.Video, 0, 0, this.VideoImage.width, this.VideoImage.height );
+		this.VideoImageContext.drawImage( this.Video, 0, 0, this.VideoImage.width, this.VideoImage.height );
 		if ( this.VideoTexture ) {
 			this.VideoTexture.needsUpdate = true;
 		}
 	}
+
 };
 
 _RemoteUser.prototype.getMesh = function ()
@@ -406,8 +410,8 @@ _RemoteUser.prototype.setVideoTexture = function(source)
 {
 		this.Video = document.createElement("video");
 		this.Video.autoplay = 1;
-		this.Video.width = 160;
-		this.Video.height = 120;
+		this.Video.width = 128;
+		this.Video.height = 128;
 		this.Video.style.visibility = "hidden";
 		this.Video.style.float = "left";
 		this.Video.src = window.URL.createObjectURL(source);

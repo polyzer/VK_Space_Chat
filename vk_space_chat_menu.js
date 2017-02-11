@@ -29,10 +29,10 @@ var _Menu = function (json_params)
 
 	
 	this.Camera = new THREE.PerspectiveCamera(this.CameraParameters.ANGLE, 
-																						this.CameraParameters.SCREEN_WIDTH/this.CameraParameters.SCREEN_HEIGHT, 
-																						this.CameraParameters.NEAR, 
-																						this.CameraParameters.FAR
-																						);
+											  this.CameraParameters.SCREEN_WIDTH/this.CameraParameters.SCREEN_HEIGHT, 
+										      this.CameraParameters.NEAR, 
+											  this.CameraParameters.FAR
+											);
 	this.Camera.position.set(0,0,700);
 
 	this.Material = new THREE.MeshBasicMaterial();

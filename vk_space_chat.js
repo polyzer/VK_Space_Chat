@@ -51,13 +51,20 @@ var _VKSpaceChat = function (json_params)
   структура, хранящая всех игроков, включая локального;	
 	*/
 	this.AllUsers = [];
+
 	/*Идентификатор комнаты будет устанавливаться,
 		когда пользователь будет в комнате;
 	*/
 	this.RoomID = null;
 	if(json_params.room_id !== undefined)
 		this.setRoomID(json_params.room_id);
+
 	this.Peer = json_params.peer;
+	// Устанавливаем обработчика событий
+	this.Peer.on("connection", this.createUserByRecievedConnectionBF);
+	this.Peer.on("call", this.onCallBF);	
+
+
 		
   this.onOpenInitAndStartGame();
 };		
@@ -82,12 +89,6 @@ _VKSpaceChat.prototype.onCall = function (call)
  */
 _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 {
-  // Устанавливаем обработчика событий
-  this.Peer.on("connection", this.createUserByRecievedConnectionBF);
-  this.Peer.on("call", this.onCallBF);
-	
-  this.AllUsers.push(this.LocalUser);
-  this.AllUsers.push(this.RemoteUsers);
 	// Локальный игрок, который будет
 	this.LocalUser = new _LocalUser({
 		scene: this.Scene, 
@@ -98,6 +99,8 @@ _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 		game_height: this.GameHeight,
 		body: this.Body
 	});
+	this.AllUsers.push(this.LocalUser);
+	this.AllUsers.push(this.RemoteUsers);
 
 	this.getAndSetInitConnections();
 
@@ -132,7 +135,7 @@ _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 		{
 			continue;
 		}
-		conn = this.Peer.connect(json_params.response[i]);
+		var conn = this.Peer.connect(json_params.response[i]);
 		this.RemoteUsers.push(new _RemoteUser({
 				net_messages_object: this.NetMessagesObject,
 				all_users: this.AllUsers,
@@ -176,7 +179,7 @@ _VKSpaceChat.prototype.updateWorkingProcess = function ()
 _VKSpaceChat.prototype.updateRemoteUsers = function ()
 {
 		for(var j=0; j<this.RemoteUsers.length; j++)
-	  {
+	  	{
 			this.RemoteUsers[j].update();
 		}
 }
@@ -215,12 +218,14 @@ _VKSpaceChat.prototype.getAndSetInitConnections = function (json_params)
  */
 _VKSpaceChat.prototype.createUserByRecievedConnection = function (conn)
 {
+	alert("Recieved Connection");
 	this.RemoteUsers.push(new _RemoteUser({
 										connection: conn,
 										scene: this.Scene,
 										all_users: this.AllUsers,
 										net_messages_object: this.NetMessagesObject													
 						}));
+
 };
 
 
