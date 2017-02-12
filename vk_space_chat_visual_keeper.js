@@ -149,17 +149,18 @@ _VisualKeeper.prototype.setTexture = function (texture)
 _VisualKeeper.prototype.setTextureAndUpdateMesh = function (texture)
 {
 	this.Material = new THREE.MeshBasicMaterial( { map: texture, overdraw: true, side:THREE.DoubleSide, color: 0xff0000 } );
-	
-	if(this.Type === USER_TYPES.LOCAL)
+
+	this.Scene.remove(this.Mesh);	
+	var temp_mesh = this.Mesh;
+	if(this.UserType == USER_TYPES.LOCAL)
 	{
-		temp_mesh = this.Mesh;
-		this.Mesh.remove(this.ShipMesh);
-		this.ShipMesh = new THREE.Mesh(this.Geometry, this.Material);
-		this.Mesh.add(this.ShipMesh);		
-	}else
+		this.ShipMesh = new THREE.Mesh(this.Geometry, this.Material);		
+		this.Mesh.add(this.ShipMesh);
+	}else if(this.UserType == USER_TYPES.REMOTE)
 	{
-		this.Scene.remove(this.Mesh);
 		this.Mesh = new THREE.Mesh(this.Geometry, this.Material);
-		this.Scene.add(this.Mesh);
+		this.Mesh.position.copy(temp_mesh.position);
 	}
+	
+	this.Scene.add(this.Mesh);
 };

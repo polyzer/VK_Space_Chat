@@ -97,7 +97,8 @@ _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 		camera: this.Camera,
 		game_width: this.GameWidth,
 		game_height: this.GameHeight,
-		body: this.Body
+		body: this.Body,
+		stream: StreamObj
 	});
 	this.AllUsers.push(this.LocalUser);
 	this.AllUsers.push(this.RemoteUsers);
@@ -144,11 +145,7 @@ _VKSpaceChat.prototype.createUsersByExistingConnections = function (json_params)
 			}));
 	}
 
-	navigator.getUserMedia({"video": true, "audio": true}, 
-						   this.makeCallsToAllRemoteUsersBF, 
-						   function (e) {}
-						  );
-	
+	this.AllUsers[0].makeCallsToAllRemoteUsers();	
 };
 /*
  * 

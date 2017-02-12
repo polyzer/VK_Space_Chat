@@ -33,20 +33,46 @@ navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia 
 window.URL = window.URL || window.webkitURL;
 var StreamObj = null;
 var MenuObj = null;
+//var MenuObj = new _Menu();
+
+/*
+IN json_parms = {
+	constraints: {video: true, audio: true},
+	onsuccess: this.onSuccessBF,
+	onerror: this.onErrorBF
+}
+*/
+function makeRightStreamRequest(json_params)
+{
+	if(navigator.mediaDevices !== undefined)
+	{
+		alert("OK");
+		navigator.mediaDevices.getUserMedia(json_params.constraints)
+		.then(json_params.onsuccess)
+		.catch(json_params.onerror);
+	} else
+	{
+		navigator.getUserMedia(json_params.constraints, 
+			json_params.onsuccess,
+			json_params.onerror);
+	}
+}
+
 
 if (!navigator.getUserMedia) 
 {
 	alert('Sorry. <code>navigator.getUserMedia()</code> is not available.');
 } else {
-	navigator.getUserMedia({video: true, audio: true}, gotStream, noStream);
+	makeRightStreamRequest({
+		constraints: {video: true, audio: true},
+		onsuccess: gotStream,
+		onerror: noStream
+	});
 }
 
 function gotStream(stream) 
 {
-	if (window.URL) 
-	{   StreamObj = window.URL.createObjectURL(stream);   } 
-	else // Opera
-	{   StreamObj = stream;   }
+	StreamObj = stream;
 	
 	stream.onended = noStream;
 	MenuObj = new _Menu();

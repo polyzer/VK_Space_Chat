@@ -11,6 +11,15 @@
  
 var _LocalUser = function (json_params)
 {
+	this.onMouseMoveBF = this.onMouseMove.bind(this);
+	window.addEventListener("mousemove", this.onMouseMoveBF, false);
+
+	this.onClickBF = this.onClick.bind(this);
+	window.addEventListener("click", this.onClickBF, false);
+	
+	this.setVideoTextureBF = this.setVideoTexture.bind(this);		
+
+
 	if(json_params !== undefined)
 	{
 		this.Scene = json_params.scene;
@@ -19,32 +28,22 @@ var _LocalUser = function (json_params)
 		this.NetMessagesObject = json_params.net_messages_object;
 		this.Camera = json_params.camera;
 		this.Body = json_params.body;
+		this.Stream = null;
 		 
-		this.Video = document.createElement("video");
-		this.Video.autoplay = 1;
-		this.Video.width = 128;
-		this.Video.height = 128;
-		this.Video.style.visibility = "hidden";
-		this.Video.style.float = "left";
-		this.Video.src = StreamObj;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!W
-		
-/*		
-		this.VideoImage = document.createElement("canvas");
-		this.VideoImage.width = 160;
-		this.VideoImage.height = 120;
-		this.VideoImage.style.visibility = "hidden";
-		this.VideoImage.style.float = "left";
+		this.Ship = new _VisualKeeper({scene: this.Scene, camera: this.Camera, user_type: this.UserType});
 
-		this.VideoImageContext = this.VideoImage.getContext("2d");
-		// background color if no video present
-		this.VideoImageContext.fillStyle = "#00FF00";
-		this.VideoImageContext.fillRect( 0, 0, this.VideoImage.width, this.VideoImage.height );
-*/
-		this.VideoTexture = new THREE.VideoTexture( this.Video);
-		this.VideoTexture.minFilter = THREE.LinearFilter;
-		this.VideoTexture.magFilter = THREE.LinearFilter;
-		this.Ship = new _VisualKeeper({scene: this.Scene, camera: this.Camera, texture: this.VideoTexture, user_type: this.UserType});
-
+		if(json_params.stream !== undefined)
+		{
+			this.Stream = json_params.stream;
+			this.setVideoTexture(json_params.stream);
+		}else
+		{
+			makeRightStreamAnswer({
+				constraints: {video: true, audio: true},
+				onsuccess: this.setVideoTextureBF,
+				onerror: function (e) {}
+			}); 
+		}
 		
 		this.GameWidth = json_params.game_width;
 		this.GameHeight = json_params.game_height;
@@ -59,16 +58,9 @@ var _LocalUser = function (json_params)
 		this.MouseVector = new THREE.Vector2();
 		this.INTERSECTED = null;
 		
-
 	}else
 		console.log(this.constructor.name + " have no json_params!");
 
-	this.onMouseMoveBF = this.onMouseMove.bind(this);
-	window.addEventListener("mousemove", this.onMouseMoveBF, false);
-
-	this.onClickBF = this.onClick.bind(this);
-	window.addEventListener("click", this.onClickBF, false);
-		
 };
 
 _LocalUser.prototype.updateVideoTextureData = function ()
@@ -193,6 +185,51 @@ _LocalUser.prototype.getShip = function ()
 {
 	return this.Ship;
 };
+_LocalUser.prototype.getStream = function ()
+{
+	return this.Stream;
+};
+
+// Вызывается для установки видеотекстуры игрока.
+_LocalUser.prototype.setVideoTexture = function(source)
+{
+		this.Video = document.createElement("video");
+		this.Video.autoplay = 1;
+		this.Video.width = 128;
+		this.Video.height = 128;
+		this.Video.style.visibility = "hidden";
+		this.Video.style.float = "left";
+		this.Video.src = window.URL.createObjectURL(source);
+/*		
+		this.VideoImage = document.createElement("canvas");
+		this.VideoImage.width = 160;
+		this.VideoImage.height = 120;
+		this.VideoImage.style.visibility = "hidden";
+		this.VideoImage.style.float = "left";
+
+		this.VideoImageContext = this.VideoImage.getContext("2d");
+		// background color if no video present
+		this.VideoImageContext.fillStyle = "#00FF00";
+		this.VideoImageContext.fillRect( 0, 0, this.VideoImage.width, this.VideoImage.height );
+*/
+		this.VideoTexture = new THREE.VideoTexture( this.Video);
+		this.VideoTexture.minFilter = THREE.LinearFilter;
+		this.VideoTexture.magFilter = THREE.LinearFilter;
+		this.Ship.setTextureAndUpdateMesh(this.VideoTexture);
+};
+
+/*
+ * It makes calls to all accessed remote users 
+*/
+_LocalUser.prototype.makeCallsToAllRemoteUsers = function (json_params)
+{
+	for(var i=0; i<this.AllUsers[1].length; i++)
+	{
+		this.Peer.call(this.AllUsers[1][i].getPeerID(), this.Stream);
+	}
+	
+};
+
 
 /* Класс описывает игрока.
  * Класс должен ОБЯЗАТЕЛЬНО принять необходимые параметры в формате JSON:
@@ -263,10 +300,9 @@ _RemoteUser.prototype.onCall = function (call)
 {
 	this.MediaConnection = call;
 	alert("from oncall");
-	navigator.getUserMedia({"video": true, "audio": true}, 
-							this.makeMediaConnectionAnswerBF, 
-							function (e) {}
-						  );
+
+	this.makeMediaConnectionAnswer(this.AllUsers[0].getStream());
+
 	this.MediaConnection.on("stream", this.onStreamBF);
 	this.MediaConnection.on("close", this.onMediaConnectionCloseBF);
 	this.MediaConnection.on("error", this.onMediaConnectionErrorBF);
