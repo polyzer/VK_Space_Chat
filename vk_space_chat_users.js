@@ -29,6 +29,7 @@ var _LocalUser = function (json_params)
 		this.Camera = json_params.camera;
 		this.Body = json_params.body;
 		this.Stream = null;
+		this.Peer = json_params.peer;
 		 
 		this.Ship = new _VisualKeeper({scene: this.Scene, camera: this.Camera, user_type: this.UserType});
 

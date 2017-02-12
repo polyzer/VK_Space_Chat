@@ -46,7 +46,6 @@ function makeRightStreamRequest(json_params)
 {
 	if(navigator.mediaDevices !== undefined)
 	{
-		alert("OK");
 		navigator.mediaDevices.getUserMedia(json_params.constraints)
 		.then(json_params.onsuccess)
 		.catch(json_params.onerror);

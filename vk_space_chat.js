@@ -98,7 +98,8 @@ _VKSpaceChat.prototype.onOpenInitAndStartGame = function (e)
 		game_width: this.GameWidth,
 		game_height: this.GameHeight,
 		body: this.Body,
-		stream: StreamObj
+		stream: StreamObj,
+		peer: this.Peer
 	});
 	this.AllUsers.push(this.LocalUser);
 	this.AllUsers.push(this.RemoteUsers);
@@ -216,13 +217,15 @@ _VKSpaceChat.prototype.getAndSetInitConnections = function (json_params)
 _VKSpaceChat.prototype.createUserByRecievedConnection = function (conn)
 {
 	alert("Recieved Connection");
-	this.RemoteUsers.push(new _RemoteUser({
-										connection: conn,
-										scene: this.Scene,
-										all_users: this.AllUsers,
-										net_messages_object: this.NetMessagesObject													
-						}));
+	var last_remote_user = new _RemoteUser({
+					connection: conn,
+					scene: this.Scene,
+					all_users: this.AllUsers,
+					net_messages_object: this.NetMessagesObject													
+	}); 
 
+	this.Peer.call(last_remote_user.getPeerID(), this.AllUsers[0].getStream());
+	this.RemoteUsers.push(last_remote_user);
 };
 
 
